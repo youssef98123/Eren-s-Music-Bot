@@ -225,6 +225,9 @@ class Playlist(EventEmitter):
         if self.peek() is entry:
             entry.get_ready_future()
 
+    def remove_entry(self, index):
+        del self.entries[index]
+
     async def get_next_entry(self, predownload_next=True):
         """
             A coroutine which will return the next song or None if no songs left to play.
@@ -265,5 +268,3 @@ class Playlist(EventEmitter):
 
     def count_for_user(self, user):
         return sum(1 for e in self.entries if e.meta.get('author', None) == user)
-
-
