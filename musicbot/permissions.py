@@ -21,6 +21,7 @@ class PermissionsDefaults:
     AllowPlaylists = True
     InstaSkip = False
 
+    AllowHigherVolume = False
 
 class Permissions:
     def __init__(self, config_file, grant_all=None):
@@ -101,6 +102,7 @@ class PermissionGroup:
 
         self.allow_playlists = section_data.get('AllowPlaylists', fallback=PermissionsDefaults.AllowPlaylists)
         self.instaskip = section_data.get('InstaSkip', fallback=PermissionsDefaults.InstaSkip)
+        self.allow_higher_volume = section_data.get('AllowHigherVolume', fallback=PermissionsDefaults.AllowHigherVolume)
 
         self.validate()
 
@@ -143,6 +145,9 @@ class PermissionGroup:
             self.instaskip, PermissionsDefaults.InstaSkip
         )
 
+        self.allow_higher_volume = configparser.RawConfigParser.BOOLEAN_STATES.get(
+            self.allow_higher_volume, PermissionsDefaults.AllowHigherVolume
+        )
 
     def add_user(self, uid):
         self.user_list.add(uid)
