@@ -28,3 +28,4 @@ Some frequently asked questions are listed on the wiki [here](https://github.com
 ## Contributing
 
 You can create pull requests and direct them to the review branch to be reviewed and merged.
+You can get ideas about what to add from issues tagged Feature Request!
