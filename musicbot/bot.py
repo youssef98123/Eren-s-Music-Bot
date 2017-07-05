@@ -679,6 +679,7 @@ class MusicBot(discord.Client):
 
         self.safe_print("  Command prefix: " + self.config.command_prefix)
         print("  Default volume: %s%%" % int(self.config.default_volume * 100))
+        print("  Maximum volume: {}%".format(self.config.max_volume))
         print("  Skip threshold: %s votes or %s%%" % (
             self.config.skips_required, self._fixg(self.config.skip_ratio_required * 100)))
         print("  Now Playing @mentions: " + ['Disabled', 'Enabled'][self.config.now_playing_mentions])
@@ -1572,14 +1573,19 @@ class MusicBot(discord.Client):
         else:
             raise exceptions.CommandError("You can't remove the current song (skip it instead), or a song in a position that doesn't exist.", expire_in=20)
 
-    async def cmd_volume(self, message, player, new_volume=None):
+    async def cmd_volume(self, author, message, player, permissions, new_volume=None):
         """
         Usage:
             {command_prefix}volume (+/-)[volume]
 
-        Sets the playback volume. Accepted values are from 1 to 100.
+        Sets the playback volume. Accepted values are from 1 to 100, or 1 to {max_volume} if you have the 'allow_higher_volume: True' permission.
         Putting + or - before the volume will make the volume change relative to the current volume.
         """
+
+        if author.id == self.config.owner_id or permissions.allow_higher_volume:
+            max_volume = self.config.max_volume
+        else:
+            max_volume = 100
 
         if not new_volume:
             return Response('Current volume: `%s%%`' % int(player.volume * 100), reply=True, delete_after=20)
@@ -1600,7 +1606,7 @@ class MusicBot(discord.Client):
 
         old_volume = int(player.volume * 100)
 
-        if 0 < new_volume <= 100:
+        if 0 < new_volume <= max_volume:
             player.volume = new_volume / 100.0
 
             return Response('updated volume from %d to %d' % (old_volume, new_volume), reply=True, delete_after=20)
@@ -1609,10 +1615,10 @@ class MusicBot(discord.Client):
             if relative:
                 raise exceptions.CommandError(
                     'E38:Unreasonable volume change provided: {}{:+} -> {}%.  Provide a change between {} and {:+}.'.format(
-                        old_volume, vol_change, old_volume + vol_change, 1 - old_volume, 100 - old_volume), expire_in=20)
+                        old_volume, vol_change, old_volume + vol_change, 1 - old_volume, max_volume - old_volume), expire_in=20)
             else:
                 raise exceptions.CommandError(
-                    'E39:Unreasonable volume provided: {}%. Provide a value between 1 and 100.'.format(new_volume), expire_in=20)
+                    'E39:Unreasonable volume provided: {}%. Provide a value between 1 and {}.'.format(new_volume, max_volume), expire_in=20)
 
     async def cmd_autoplaylist(self, channel, author, player, voice_channel):
         """
