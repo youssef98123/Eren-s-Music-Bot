@@ -1371,6 +1371,47 @@ class MusicBot(discord.Client):
         else:
             await self.send_message(channel, "**%s** is already in the autoplaylist!" % (player.current_entry.title))
 
+    async def cmd_plremove(self, player, song_url=None):
+        """
+        Usage:
+            {command_prefix}plremove current song
+            {command_prefix}plremove song_url
+
+        Remove a song from the autoplaylist.
+        """
+
+        #No url provided
+        if not song_url:
+            #Check if there is something playing
+            if not player._current_entry:
+                raise exceptions.CommandError('There is nothing playing.', expire_in=20)
+
+            #Get the url of the current entry
+            else:
+                song_url = player._current_entry.url
+                title = player._current_entry.title
+
+        else:
+            #Get song info from url
+            info = await self.downloader.safe_extract_info(player.playlist.loop, song_url, download=False, process=False)
+
+            #Verify proper url
+            if not info:
+                raise exceptions.CommandError('Invalid url. Please insure link is a valid YouTube, SoundCloud or BandCamp url.', expire_in=20)
+
+            else:
+                title = info.get('title', '')
+
+#Verify that the song is in our playlist
+        for url in self.autoplaylist:
+            if song_url == url:
+                self.autoplaylist.remove(song_url)
+                write_file(self.config.auto_playlist_file, self.autoplaylist)
+                self.autoplaylist = load_file(self.config.auto_playlist_file)
+                return Response("Removed %s from the autoplaylist." % title, delete_after=30)
+
+        return Response("Song not present in autoplaylist.", delete_after=30) 
+
     async def cmd_summon(self, channel, author, voice_channel):
         """
         Usage:
